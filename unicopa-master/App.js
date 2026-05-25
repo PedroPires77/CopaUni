@@ -4,7 +4,7 @@ import GameCard from './components/GameCard';
 import { sortByHoraBrasilia } from './utils/sort';
 import { formatDateBR } from './utils/data';
 import { importarJogos } from './utils/importarJogos';
-import dados from './assets/dados.json';
+import { supabase } from './utils/supabase';
 
 export default function App() {
 
@@ -13,15 +13,25 @@ export default function App() {
   const [grupoSelecionado, setGrupoSelecionado] = useState(null);
   const [mensagemImport, setMensagemImport] = useState('');
   const [importando, setImportando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    setJogos(dados.jogos);
+    const buscarJogos = async () => {
+      const { data, error } = await supabase.from('jogos').select('*');
+      if (!error && data && data.length > 0) {
+        setJogos(data);
+      } else {
+        setJogos([]);
+      }
+      setCarregando(false);
+    };
+    buscarJogos();
   }, []);
 
   const hoje = new Date();
   const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
 
-  const grupos = [...new Set(dados.jogos.map(j => j.grupo))].sort();
+  const grupos = [...new Set(jogos.map(j => j.grupo))].sort();
 
   const toggleGrupo = (grupo) => {
     setGrupoSelecionado(prev => prev === grupo ? null : grupo);
@@ -39,6 +49,10 @@ export default function App() {
     const resultado = await importarJogos();
     setMensagemImport(resultado.mensagem);
     setImportando(false);
+    const { data, error } = await supabase.from('jogos').select('*');
+    if (!error && data && data.length > 0) {
+      setJogos(data);
+    }
   };
 
   const agruparPorData = (jogos) => {
@@ -112,32 +126,42 @@ export default function App() {
         ))}
       </View>
 
-      <SectionList
-        style={styles.lista}
-        sections={jogosTratados}
-        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        renderItem={() => null}
-        renderSectionHeader={({ section }) => (
-          <View style={[styles.card, section.isHoje && styles.cardHoje]}>
-            <View style={styles.dataContainer}>
-              <Text style={styles.data}>{section.dataFormatada}</Text>
-              {section.isHoje && (
-                <View style={styles.badgeHoje}>
-                  <Text style={styles.badgeHojeTexto}>HOJE</Text>
-                </View>
-              )}
+      {carregando ? (
+        <View style={styles.cardVazio}>
+          <Text style={styles.cardVazioTexto}>Carregando jogos...</Text>
+        </View>
+      ) : jogosTratados.length === 0 ? (
+        <View style={styles.cardVazio}>
+          <Text style={styles.cardVazioTexto}>Nenhum jogo carregado</Text>
+        </View>
+      ) : (
+        <SectionList
+          style={styles.lista}
+          sections={jogosTratados}
+          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+          renderItem={() => null}
+          renderSectionHeader={({ section }) => (
+            <View style={[styles.card, section.isHoje && styles.cardHoje]}>
+              <View style={styles.dataContainer}>
+                <Text style={styles.data}>{section.dataFormatada}</Text>
+                {section.isHoje && (
+                  <View style={styles.badgeHoje}>
+                    <Text style={styles.badgeHojeTexto}>HOJE</Text>
+                  </View>
+                )}
+              </View>
+              {section.data.map((jogo) => (
+                <GameCard
+                  key={jogo.id}
+                  game={jogo}
+                  isFavorito={favoritos.includes(jogo.id)}
+                  onToggleFavorito={() => toggleFavorito(jogo.id)}
+                />
+              ))}
             </View>
-            {section.data.map((jogo) => (
-              <GameCard
-                key={jogo.id}
-                game={jogo}
-                isFavorito={favoritos.includes(jogo.id)}
-                onToggleFavorito={() => toggleFavorito(jogo.id)}
-              />
-            ))}
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
     </ImageBackground>
   );
 }
@@ -263,5 +287,20 @@ const styles = StyleSheet.create({
   mensagemTexto: {
     color: 'white',
     fontSize: 12,
+  },
+  cardVazio: {
+    marginTop: 40,
+    marginHorizontal: 16,
+    backgroundColor: '#0c1b2a',
+    borderRadius: 12,
+    padding: 30,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1e2d3d',
+  },
+  cardVazioTexto: {
+    color: '#8fa3b8',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
