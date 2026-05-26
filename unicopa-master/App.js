@@ -6,8 +6,14 @@ import { formatDateBR } from './utils/data';
 import { importarJogos } from './utils/importarJogos';
 import { supabase } from './utils/supabase';
 import { buscarFavoritos, toggleFavoritoSupabase } from './utils/favoritosService';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
 
-export default function App() {
+const Stack = createNativeStackNavigator();
+
+function HomeScreen() {
 
   const [jogos, setJogos] = useState([]);
   const [favoritos, setFavoritos] = useState([]);
@@ -308,3 +314,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
