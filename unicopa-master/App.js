@@ -10,10 +10,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import PalpitesScreen from './screens/PalpitesScreen';
 
 const Stack = createNativeStackNavigator();
 
-function HomeScreen() {
+function HomeScreen({ navigation }) {
 
   const [jogos, setJogos] = useState([]);
   const [favoritos, setFavoritos] = useState([]);
@@ -102,6 +103,10 @@ function HomeScreen() {
       />
 
       <Text style={styles.title}>CALENDÁRIO</Text>
+
+      <TouchableOpacity style={styles.botaoPalpites} onPress={() => navigation.navigate('Palpites')}>
+         <Text style={styles.botaoPalpitesTexto}> Meus Palpites</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.botaoImport, importando && styles.botaoImportando]}
@@ -313,6 +318,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  botaoPalpites: {
+  marginTop: 8,
+  backgroundColor: '#1a2f45',
+  borderWidth: 1,
+  borderColor: '#f2cc2f',
+  borderRadius: 8,
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+},
+botaoPalpitesTexto: {
+  color: '#f2cc2f',
+  fontWeight: 'bold',
+  fontSize: 13,
+},
 });
 export default function App() {
   return (
@@ -321,6 +340,7 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Palpites" component={PalpitesScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
