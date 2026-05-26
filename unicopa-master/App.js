@@ -5,6 +5,7 @@ import { sortByHoraBrasilia } from './utils/sort';
 import { formatDateBR } from './utils/data';
 import { importarJogos } from './utils/importarJogos';
 import { supabase } from './utils/supabase';
+import { buscarFavoritos, toggleFavoritoSupabase } from './utils/favoritosService';
 
 export default function App() {
 
@@ -15,18 +16,20 @@ export default function App() {
   const [importando, setImportando] = useState(false);
   const [carregando, setCarregando] = useState(true);
 
-  useEffect(() => {
-    const buscarJogos = async () => {
-      const { data, error } = await supabase.from('jogos').select('*');
-      if (!error && data && data.length > 0) {
-        setJogos(data);
-      } else {
-        setJogos([]);
-      }
-      setCarregando(false);
-    };
-    buscarJogos();
-  }, []);
+ useEffect(() => {
+  const inicializar = async () => {
+    const { data, error } = await supabase.from('jogos').select('*');
+    if (!error && data && data.length > 0) {
+      setJogos(data);
+    } else {
+      setJogos([]);
+    }
+    const favs = await buscarFavoritos();
+    setFavoritos(favs);
+    setCarregando(false);
+  };
+  inicializar();
+}, []);
 
   const hoje = new Date();
   const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
@@ -37,11 +40,12 @@ export default function App() {
     setGrupoSelecionado(prev => prev === grupo ? null : grupo);
   };
 
-  const toggleFavorito = (id) => {
-    setFavoritos(prev =>
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
-    );
-  };
+  const toggleFavorito = async (id) => {
+  const favoritado = await toggleFavoritoSupabase(id);
+  setFavoritos(prev =>
+    favoritado ? [...prev, id] : prev.filter(f => f !== id)
+  );
+};
 
   const handleImportar = async () => {
     setImportando(true);
